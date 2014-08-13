@@ -9,15 +9,17 @@ from subprocess import call, check_output, Popen, PIPE
 config = ConfigParser.ConfigParser()
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__))) # read config file
 
-sheetWidth = int(config.get('contactsheets','sheetWidth'))
-sheetHeight = int(config.get('contactsheets','sheetHeight'))
-sheetColumns = int(config.get('contactsheets','sheetColumns'))
-sheetRows = int(config.get('contactsheets','sheetRows'))
+sheetWidth = int(config.get('contactsheets', 'sheetWidth'))
+sheetHeight = int(config.get('contactsheets', 'sheetHeight'))
+sheetColumns = int(config.get('contactsheets', 'sheetColumns'))
+sheetRows = int(config.get('contactsheets', 'sheetRows'))
+horizontalSpacing = int(config.get('contactsheets', 'horizontalSpacing'))
+verticalSpacing = int(config.get('contactsheets', 'verticalSpacing'))
 
-startOffset = int(config.get('frameGrabbing','startOffset'))
-endOffset = int(config.get('frameGrabbing','endOffset'))
-grabber = config.get('frameGrabbing','grabber')
-frameFormat = config.get('frameGrabbing','frameFormat')
+startOffset = int(config.get('frameGrabbing', 'startOffset'))
+endOffset = int(config.get('frameGrabbing', 'endOffset'))
+grabber = config.get('frameGrabbing', 'grabber')
+frameFormat = config.get('frameGrabbing', 'frameFormat')
 
 tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir'))
 
@@ -53,6 +55,9 @@ def onError(errorCode, extra):
         print "Video is too short, %s s, for your settings" % extra
         require = startOffset + endOffset + sheetColumns * sheetRows
         print "Your settings require at least %d s" % require
+        raw_input('Press [Return] key to continue')
+    elif errorCode == 10:
+        print "*** Could not create frame# %s" % extra
         raw_input('Press [Return] key to continue')
 
 def usage(exitCode):
@@ -119,6 +124,8 @@ else:
     if not os.access(tempDir, os.W_OK):
         onError(8, tempDir)
 
+if verbose:
+    print "--- Temporary directory is %s" % tempDir
 
 ############### more functions ###############
 def processFile(file):
@@ -231,7 +238,7 @@ def processFile(file):
     interval = calculate(videoDurations)
     
     if grabber == "mplayer":
-        mplayerGrabber(interval)
+        mplayerGrabber(interval, fileName)
 
 def calculate(videoDurations):
     if startOffset + endOffset > videoDurations:
@@ -243,7 +250,7 @@ def calculate(videoDurations):
 
     return interval
 
-def mplayerGrabber(interval):
+def mplayerGrabber(interval, fileName):
     print "--- Grabbing frames with mplayer"
 
     # mplayer -nosound -ss $STEP -frames 1 -vo jpeg $FILE
@@ -251,14 +258,27 @@ def mplayerGrabber(interval):
     for frameNo in range (0, sheetColumns * sheetRows):
         time = startOffset + frameNo * interval
         if verbose:
-            print "--- Grabbing frame at %s seconds" % time
-        #cmd = "mplayer -nosound --ss %s -frames 1 -vo %s:outdir=%s %s" % (time, frameFormat, tempDir, file)
-        #args = shlex.split(cmd)
-        #output, error = Popen(args, stdout = PIPE, stderr = PIPE).communicate()
-        print "mplayer", "-nosound", "-ss", time, "-frames", "1", "-vo", "%s:outdir=%s" % (frameFormat, tempDir), file
-        call(["mplayer", "-nosound", "-ss", time, "-frames", "1", "-vo", "%s:outdir=%s" % (frameFormat, tempDir), file])
+            print "--- Grabbing frame# %s at %s seconds" % ((frameNo + 1), time)
 
+        cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'"  % (time, frameFormat, file) 
+        args = shlex.split(cmd)
+        output, error = Popen(args, stdout = PIPE, stderr = PIPE).communicate()
+
+        "print output"
+        #if error:
+        #    print error
+
+        if os.path.isfile("00000001.jpg"):
+            if verbose:
+                print "--- Moving frame# %s to temporary directory" % (frameNo + 1)
+            if frameNo + 1< 10:
+                frameCount = "0%d" % (frameNo +1)
+            else:
+                frameCount = frameNo + 1
+            os.rename("00000001.jpg", "%s/%s.%s.%s" % (tempDir, fileName, frameCount, frameFormat))
+        else:
+            onError(10, frameNo +1)
 ############### single video file ###############
 if file:
-    print "%s\n------------------------------------------------------------------" % file
+    print "\n%s\n------------------------------------------------------------------" % file
     processFile(file)
