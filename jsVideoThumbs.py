@@ -6,70 +6,36 @@ import ConfigParser, os, getopt, sys, shlex
 
 from subprocess import call, check_output, Popen, PIPE
 
-config = ConfigParser.ConfigParser()
+from PIL import Image
+
+from error import *
+
+config = ConfigParser.ConfigParser() # define config file
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__))) # read config file
 
-sheetWidth = int(config.get('contactsheets', 'sheetWidth'))
+sheetWidth = int(config.get('contactsheets', 'sheetWidth')) # paramaters for the contact sheet
 sheetHeight = int(config.get('contactsheets', 'sheetHeight'))
+
 sheetColumns = int(config.get('contactsheets', 'sheetColumns'))
 sheetRows = int(config.get('contactsheets', 'sheetRows'))
-horizontalSpacing = int(config.get('contactsheets', 'horizontalSpacing'))
-verticalSpacing = int(config.get('contactsheets', 'verticalSpacing'))
 
-startOffset = int(config.get('frameGrabbing', 'startOffset'))
+leftMargin = int(config.get('contactsheets', 'leftMargin'))
+topMargin = int(config.get('contactsheets', 'topMargin'))
+rightMargin = int(config.get('contactsheets', 'rightMargin'))
+bottomMargin = int(config.get('contactsheets', 'bottomMargin'))
+
+thumbPadding = int(config.get('contactsheets', 'thumbPadding'))
+
+sheetBackground = config.get('contactsheets', 'sheetBackground')
+
+sheetParams = [sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground]
+
+startOffset = int(config.get('frameGrabbing', 'startOffset')) # parameters for the frame grabs
 endOffset = int(config.get('frameGrabbing', 'endOffset'))
 grabber = config.get('frameGrabbing', 'grabber')
 frameFormat = config.get('frameGrabbing', 'frameFormat')
 
-tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir'))
-
-############### functions ###############
-
-def onError(errorCode, extra):
-    print "\nError:"
-    if errorCode == 1:
-        print extra
-        usage(errorCode)
-    elif errorCode == 2:
-        print "No options given"
-        usage(errorCode)
-    elif errorCode == 3:
-        print "No program part chosen"
-        usage(errorCode)
-    elif errorCode == 4:
-        print "File %s does not exist" % extra
-        sys.exit(errorCode)
-    elif errorCode == 5:
-        print "%s is a link" % extra
-        sys.exit(errorCode)
-    elif errorCode == 6:
-        print "%s is not a directory" % extra
-        sys.exit(errorCode)
-    elif errorCode == 7:
-        print "Opted not to create temporary directory %s" % extra
-        sys.exit(7)
-    elif errorCode == 8:
-        print "Temporary directory %s not writeable" % extra
-        sys.exit(errorCode)
-    elif errorCode == 9:
-        print "Video is too short, %s s, for your settings" % extra
-        require = startOffset + endOffset + sheetColumns * sheetRows
-        print "Your settings require at least %d s" % require
-        raw_input('Press [Return] key to continue')
-    elif errorCode == 10:
-        print "*** Could not create frame# %s" % extra
-        raw_input('Press [Return] key to continue')
-
-def usage(exitCode):
-    print "\nUsage:"
-    print "----------------------------------------"
-    print "%s -f <file> [-i]" % sys.argv[0]
-    print "  Options: -i if you want to display file 'i'nfo"
-    print "    OR\n"
-    print "%s -p <directory> [-i]" % sys.argv[0]
-    print "  Options: -i if you want to display file 'i'nfo"
-
-    sys.exit(exitCode)
+tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir')) # temporary dir, used to store frame grabs
 
 ############### handle arguments ###############
 try:
@@ -128,7 +94,7 @@ if verbose:
     print "--- Temporary directory is %s" % tempDir
 
 ############### more functions ###############
-def processFile(file):
+def processFile(file, sheetParams, verbose):
     answer = []
 
     ##### general #####
@@ -235,28 +201,33 @@ def processFile(file):
         print "Stream Size: %s b, %s" % (audioStreamSizeb, audioStreamSize)
         print error
 
-    interval = calculate(videoDurations)
+    interval = calculate(videoDurations, verbose)
     
     if grabber == "mplayer":
-        mplayerGrabber(interval, fileName)
+        frameNames = mplayerGrabber(interval, fileName, verbose)
 
-def calculate(videoDurations):
-    if startOffset + endOffset > videoDurations:
+    contactSheet = makeContactSheet(frameNames, sheetParams, verbose) # create the contact sheet
+    contactSheet.save('bs.png') # save contact sheet
+
+def calculate(videoDurations, verbose):
+    if startOffset + endOffset > videoDurations: # too short video
         onError(9, videoDurations)
 
-    interval = (videoDurations - startOffset - endOffset) / (sheetColumns * sheetRows)
+    interval = (videoDurations - startOffset - endOffset) / (sheetColumns * sheetRows) # how often to catch a frame
+
     if verbose:
         print "--- Will catch a frame every %s millisecond" % interval
 
     return interval
 
-def mplayerGrabber(interval, fileName):
+def mplayerGrabber(interval, fileName, verbose):
+    frameNames = []
     print "--- Grabbing frames with mplayer"
 
     # mplayer -nosound -ss $STEP -frames 1 -vo jpeg $FILE
 
     for frameNo in range (0, sheetColumns * sheetRows):
-        time = startOffset + frameNo * interval
+        time = (startOffset + frameNo * interval) / 1000
         if verbose:
             print "--- Grabbing frame# %s at %s seconds" % ((frameNo + 1), time)
 
@@ -275,10 +246,48 @@ def mplayerGrabber(interval, fileName):
                 frameCount = "0%d" % (frameNo +1)
             else:
                 frameCount = frameNo + 1
-            os.rename("00000001.jpg", "%s/%s.%s.%s" % (tempDir, fileName, frameCount, frameFormat))
+
+            frameName = "%s/%s.%s.%s" % (tempDir, fileName, frameCount, frameFormat)
+            os.rename("00000001.jpg", frameName)
+            frameNames.append(frameName)
         else:
             onError(10, frameNo +1)
+            
+    return frameNames
+
+def makeContactSheet(frameNames, (sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground), verbose):
+    sampleFrame = Image.open(frameNames[0])
+    thumbWidth, thumbHeight = sampleFrame.size
+    if verbose:
+        print "--- Thumbs width x height: %s x %s" % (thumbWidth, thumbHeight)
+
+    thumbs = [Image.open(frame).resize((thumbWidth, thumbHeight)) for frame in frameNames] # Read in all images and resize appropriately
+
+    marginsWidth = leftMargin + rightMargin # Calculate the size of the output image, based on the photo thumb sizes, margins, and padding
+    marginsHeight = topMargin + bottomMargin
+
+    paddingsWidth = (sheetColumns - 1) * thumbPadding
+    paddingsHeight = (sheetRows - 1) * thumbPadding
+    contactSheetSize = (sheetColumns * thumbWidth + marginsWidth + paddingsWidth, sheetRows * thumbHeight + marginsHeight + paddingsHeight)
+
+    contactSheet = Image.new('RGB', contactSheetSize, "rgb%s" % sheetBackground) # Create the new image
+
+    # Insert each thumb:
+    for rowNo in range(sheetRows):
+        for columnNo in range(sheetColumns):
+            left = leftMargin + columnNo * (thumbWidth + thumbPadding)
+            right = left + thumbWidth
+            upper = topMargin + rowNo * (thumbHeight + thumbPadding)
+            lower = upper + thumbHeight
+            bbox = (left, upper, right, lower)
+            try:
+                image = thumbs.pop(0)
+            except:
+                break
+            contactSheet.paste(image, bbox)
+    return contactSheet
+
 ############### single video file ###############
 if file:
     print "\n%s\n------------------------------------------------------------------" % file
-    processFile(file)
+    processFile(file, sheetParams, verbose)
