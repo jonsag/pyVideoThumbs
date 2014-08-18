@@ -12,8 +12,9 @@ from datetime import timedelta
 
 getcontext().prec = 3 # precision of floating point
 
-def makeContactSheet(frameNames, grabTimes, sheetParams, tcParams, tempDir, verbose):
+def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, verbose):
     sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
+
     trimmedFrames = []
     frameNo = 0
 
@@ -23,8 +24,7 @@ def makeContactSheet(frameNames, grabTimes, sheetParams, tcParams, tempDir, verb
         print "--- Original width x height: %s x %s px" % (originalWidth, originalHeight)
 
     print "--- Trimming frames"
-
-    for frame in frameNames:
+    for frame in frameNames: # removing borders from screen shots
         frameNo += 1
         trimmedFileName = "%s/%s.trimmed.png" % (tempDir, os.path.splitext(os.path.basename(frame))[0])
         if verbose:
@@ -41,18 +41,17 @@ def makeContactSheet(frameNames, grabTimes, sheetParams, tcParams, tempDir, verb
     trimmedWidth, trimmedHeight = trimmedFrame.size
     trimmedWidth = Decimal(trimmedWidth)
     trimmedHeight = Decimal(trimmedHeight)
-
     trimmedRatio = trimmedWidth / trimmedHeight
 
     if trimmedWidth >= trimmedHeight:
         thumbWidth = (sheetWidth - leftMargin - rightMargin - (sheetColumns -1) * thumbPadding) / sheetColumns
         thumbHeight = thumbWidth / trimmedRatio
     else:
-        thumbHeight = (sheetHeight - topMargin - bottomMargin - (sheetRows -1) * thumbPadding) / sheetRows
+        thumbHeight = (sheetHeight - topMargin - bottomMargin - infoHeight - (sheetRows -1) * thumbPadding) / sheetRows
         thumbWidth = thumbHeight * trimmedRatio
 
     sheetW = leftMargin + rightMargin + (sheetColumns - 1) * thumbPadding + thumbWidth * sheetColumns
-    sheetH = topMargin + bottomMargin + (sheetRows - 1) * thumbPadding + thumbHeight * sheetRows
+    sheetH = topMargin + bottomMargin + infoHeight + (sheetRows - 1) * thumbPadding + thumbHeight * sheetRows
 
     if verbose:
         print "--- Trimmed width x height: %s x %s px" % (trimmedWidth, trimmedHeight)
@@ -87,6 +86,9 @@ def makeContactSheet(frameNames, grabTimes, sheetParams, tcParams, tempDir, verb
             except:
                 break
             contactSheet.paste(image, bbox)
+
+    contactSheet = addInfo(contactSheet, infoParams, fileInfo, infoHeight, verbose)
+
     return contactSheet
 
 def removeBorders(file, verbose):
@@ -126,15 +128,44 @@ def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, temp
                 tcX = 10
                 tcY = thumbHeight - 10 - tcSize
 
+            thumb = printTextOutline(thumb, tcX, tcY, grabTime, tcOutlineColour, tcFont, tcSize) # print text outline
             draw = ImageDraw.Draw(thumb)
             font = ImageFont.truetype(tcFont, tcSize)
-            draw.text((tcX + 1, tcY), grabTime, tcOutlineColour, font=font) # drawing the outline colour
-            draw.text((tcX - 1, tcY), grabTime, tcOutlineColour, font=font)
-            draw.text((tcX, tcY - 1), grabTime, tcOutlineColour, font=font)
-            draw.text((tcX, tcY + 1), grabTime, tcOutlineColour, font=font)
+            #draw.text((tcX + 1, tcY), grabTime, tcOutlineColour, font=font) # drawing the outline colour
+            #draw.text((tcX - 1, tcY), grabTime, tcOutlineColour, font=font)
+            #draw.text((tcX, tcY - 1), grabTime, tcOutlineColour, font=font)
+            #draw.text((tcX, tcY + 1), grabTime, tcOutlineColour, font=font)
             draw.text((tcX, tcY), grabTime, tcColour, font=font) # drawing with the fill colour
 
         thumb.save(thumbFileName)
         thumbFrames.append(thumbFileName)
 
     return thumbFrames
+
+def printTextOutline(image, posX, posY, text, outlineColour, font, fontSize):
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(font, fontSize)
+    draw.text((posX + 1, posY), text, outlineColour, font=font) # drawing the outline colour                                                                            
+    draw.text((posX - 1, posY), text, outlineColour, font=font)
+    draw.text((posX, posY - 1), text, outlineColour, font=font)
+    draw.text((posX, posY + 1), text, outlineColour, font=font)
+    return image
+
+def addInfo(contactSheet, infoParams, fileInfo, infoHeight, verbose):
+    infoColour, infoOutlineColour, infoFont, infoSize = infoParams
+
+    posX = 2
+    posY = 2
+    paddingY = 2
+    rows = 4
+
+    infoSize = (infoHeight - (rows - 1) * paddingY - posX * 2) / rows
+
+    print "--- Adding video information"
+    draw = ImageDraw.Draw(contactSheet)
+    font = ImageFont.truetype(infoFont, infoSize)
+    draw.text((posX, posY), "File name: %s.%s" % (fileInfo['fileName'], fileInfo['fileExtension']), infoColour, font=font)
+    draw.text((posX, posY + infoSize + paddingY), "Duration: %s" % fileInfo['generalDuration'], infoColour, font=font)
+    draw.text((posX, posY + infoSize * 2 + paddingY * 2), "File size: %s" % fileInfo['fileSize'], infoColour, font=font)
+    draw.text((posX, posY + infoSize * 3 + paddingY * 3), "Width x height: %s x %s px" % (fileInfo['width'], fileInfo['height']), infoColour, font=font)
+    return contactSheet

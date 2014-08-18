@@ -38,6 +38,12 @@ tcFont = config.get('timeCode', 'tcFont')
 tcSize = int(config.get('timeCode', 'tcSize'))
 tcParams = [timeCode, tcPlace, tcColour, tcOutlineColour, tcFont, tcSize]
 
+infoColour = config.get('info', 'infoColour')
+infoOutlineColour = config.get('info', 'infoOutlineColour')
+infoFont = config.get('info', 'infoFont')
+infoSize = int(config.get('info', 'infoSize'))
+infoParams = [infoColour, infoOutlineColour, infoFont, infoSize]
+
 tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir')) # temporary dir, used to store frame grabs
 
 ############### handle arguments ###############
@@ -100,9 +106,9 @@ if verbose:
 if file:
     print "\n%s\n------------------------------------------------------------------" % file
 
-    frameNames, grabTimes = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
+    frameNames, grabTimes, fileInfo = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
 
-    contactSheet = makeContactSheet(frameNames, grabTimes, sheetParams, tcParams, tempDir, verbose) # create the contact sheet
+    contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, verbose) # create the contact sheet
 
     fileName = os.path.basename(file)
     contactSheet.save("%s.png" % fileName) # save contact sheet

@@ -14,6 +14,7 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
     sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
 
     answer = []
+    fileInfo = {}
 
     ##### general #####
     if verbose:
@@ -25,27 +26,21 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
     output = output.rstrip()
     answer = output.split(',')
 
-    generalDurations = int(answer[0])
-    generalDuration = answer[1]
-    overallBitrates = int(answer[2])
-    overallBitrate = answer[3]
-    generalFormat = answer[4]
-    fileSizeb = int(answer[5])
-    fileSize = answer[6]
-    generalStreamSizeb = answer[7]
-    generalStreamSize = answer[8]
-    fileName = answer[9]
-    fileExtension = answer[10]
-    fullFileName = "%s.%s" % (fileName, fileExtension)
-        
+    infoNo = 0
+    for key in ("generalDurations", "generalDuration", "overallBitrates", "overallBitrate", "generalFormat", "fileSizeb", "fileSize", "generalStreamSizeb", "generalStreamSize", "fileName", "fileExtension"):
+        fileInfo[key] = answer[infoNo]
+        infoNo += 1
+    
     if info:
+        fullFileName = "%s.%s" % (fileInfo['fileName'], fileInfo['fileExtension'])
+
         print "General:"
         print "File name: %s" % fullFileName
-        print "Duration: %s ms, %s" % (generalDurations, generalDuration)
-        print "Overall bitrate: %s bps, %s" % (overallBitrates, overallBitrate)
-        print "Format: %s" % generalFormat
-        print "File size: %s b, %s" % (fileSizeb, fileSize)
-        print "Stream size: %s b, %s" % (generalStreamSizeb, generalStreamSize)
+        print "Duration: %s ms, %s" % (fileInfo['generalDurations'], fileInfo['generalDuration'])
+        print "Overall bitrate: %s bps, %s" % (fileInfo['overallBitrates'], fileInfo['overallBitrate'])
+        print "Format: %s" % fileInfo['generalFormat']
+        print "File size: %s b, %s" % (fileInfo['fileSizeb'], fileInfo['fileSize'])
+        print "Stream size: %s b, %s" % (fileInfo['generalStreamSizeb'], fileInfo['generalStreamSize'])
         print error
 
 
@@ -59,36 +54,24 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
     output = output.rstrip()
     answer = output.split(',')
 
-    videoDurations = int(answer[0])
-    VideoDuration = answer[1]
-    width = int(answer[2])
-    height = int(answer[3])
-    videoBitrateb = int(answer[4])
-    videoBitrate = answer[5]
-    frameRate = answer[6]
-    frameCount = int(answer[7])
-    videoFormat = answer[8]
-    videoCodecID = answer[9]
-    pixelAspectRatio = answer[10]
-    displayAspectRatio = answer[11]
-    displayAspectRatioTV = answer[12]
-    tvStandard = answer[13]
-    videoStreamSizeb = answer[14]
-    videoStreamSize = answer[15]
+    infoNo = 0
+    for key in ("videoDurations", "videoDuration", "width", "height", "videoBitrateb", "videoBitrate", "frameRate", "frameCount", "videoFormat", "videoCodecID", "pixelAspectRatio", "displayAspectRatio", "displayAspectRatioTV", "tvStandard", "videoStreamSizeb", "videoStreamSize"):
+        fileInfo[key] = answer[infoNo]
+        infoNo += 1
 
     if info:
         print "Video:"
-        print "Duration: %s ms, %s" % (videoDurations, VideoDuration)
-        print "Width x height: %s x %s px" % (width, height)
-        print "Video bitrate: %s bps, %s" % (videoBitrateb, videoBitrate)
-        print "Framerate: %s fps" % frameRate
-        print "Framecount: %s" % frameCount
-        print "Format: %s" % videoFormat
-        print "Codec ID: %s" % videoCodecID
-        print "Pixel aspect ratio: %s" % pixelAspectRatio
-        print "Display aspect ratio: %s, %s" % (displayAspectRatio, displayAspectRatioTV)
-        print "Standard: %s" % tvStandard
-        print "StreamSize: %s b, %s" % (videoStreamSizeb, videoStreamSize)
+        print "Duration: %s ms, %s" % (fileInfo['videoDurations'], fileInfo['videoDuration'])
+        print "Width x height: %s x %s px" % (fileInfo['width'], fileInfo['height'])
+        print "Video bitrate: %s bps, %s" % (fileInfo['videoBitrateb'], fileInfo['videoBitrate'])
+        print "Framerate: %s fps" % fileInfo['frameRate']
+        print "Framecount: %s" % fileInfo['frameCount']
+        print "Format: %s" % fileInfo['videoFormat']
+        print "Codec ID: %s" % fileInfo['videoCodecID']
+        print "Pixel aspect ratio: %s" % fileInfo['pixelAspectRatio']
+        print "Display aspect ratio: %s, %s" % (fileInfo['displayAspectRatio'], fileInfo['displayAspectRatioTV'])
+        print "Standard: %s" % fileInfo['tvStandard']
+        print "StreamSize: %s b, %s" % (fileInfo['videoStreamSizeb'], fileInfo['videoStreamSize'])
         print error
 
     ##### audio #####
@@ -101,23 +84,21 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
     output = output.rstrip()
     answer = output.split(',')
 
-    audioDurations = int(answer[0])
-    audioDuration = answer[1]
-    audioBitrateb = int(answer[2])
-    audioBitrate = answer[3]
-    audioFormat = answer[4]
-    audioCodecID = answer[5]
-    audioStreamSizeb = answer[6]
-    audioStreamSize = answer[7]
+    infoNo = 0
+    for key in ("audioDurations", "audioDuration", "audioBitrateb", "audioBitrate", "audioFormat", "audioCodecID", "audioStreamSizeb", "audioStreamSize"):
+        fileInfo[key] = answer[infoNo]
+        infoNo += 1
 
     if info:
         print "Audio:"
-        print "Duration: %s ms, %s" % (audioDurations, audioDuration)
-        print "Audio bitrate: %s bps, %s" % (audioBitrateb, audioBitrate)
-        print "Format: %s" % audioFormat
-        print "Codec ID: %s" % audioCodecID
-        print "Stream Size: %s b, %s" % (audioStreamSizeb, audioStreamSize)
+        print "Duration: %s ms, %s" % (fileInfo['audioDurations'], fileInfo['audioDuration'])
+        print "Audio bitrate: %s bps, %s" % (fileInfo['audioBitrateb'], fileInfo['audioBitrate'])
+        print "Format: %s" % fileInfo['audioFormat']
+        print "Codec ID: %s" % fileInfo['audioCodecID']
+        print "Stream Size: %s b, %s" % (fileInfo['audioStreamSizeb'], fileInfo['audioStreamSize'])
         print error
+
+    videoDurations = int(fileInfo['videoDurations'])
 
     if startOffset + endOffset > videoDurations: # too short video
         onError(9, videoDurations)
@@ -126,10 +107,11 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
     if verbose:
         print "--- Will catch a frame every %s millisecond" % interval
 
+    fileName = fileInfo['fileName']
     if grabber == "mplayer":
         frameNames, grabTimes = mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose)
 
-    return (frameNames, grabTimes)
+    return (frameNames, grabTimes, fileInfo)
 
 def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose):
     startOffset, endOffset, grabber, frameFormat = videoParams
