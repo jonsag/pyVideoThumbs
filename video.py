@@ -11,7 +11,7 @@ from error import *
 def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     startOffset, endOffset, grabber, frameFormat = videoParams    
-    sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground = sheetParams
+    sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
 
     answer = []
 
@@ -127,15 +127,16 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
         print "--- Will catch a frame every %s millisecond" % interval
 
     if grabber == "mplayer":
-        frameNames = mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose)
+        frameNames, grabTimes = mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose)
 
-    return frameNames
+    return (frameNames, grabTimes)
 
 def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose):
     startOffset, endOffset, grabber, frameFormat = videoParams
-    sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground = sheetParams
+    sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
 
     frameNames = []
+    grabTimes = []
 
     print "--- Grabbing frames with mplayer"
 
@@ -144,7 +145,9 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
     for frameNo in range (0, sheetColumns * sheetRows):
         time = (startOffset + frameNo * interval) / 1000
         if verbose:
-            print "--- Grabbing frame# %s at %s seconds" % ((frameNo + 1), time)
+            print "--- Grabbing frame #%s at %s seconds" % ((frameNo + 1), time)
+        #else:
+        #    print "%d " % (frameNo + 1),
 
         cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'"  % (time, frameFormat, file) 
         args = shlex.split(cmd)
@@ -155,7 +158,7 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
 
         if os.path.isfile("00000001.jpg"):
             if verbose:
-                print "--- Moving frame# %s to temporary directory" % (frameNo + 1)
+                print "--- Moving frame #%s to temporary directory" % (frameNo + 1)
             if frameNo + 1< 10:
                 frameCount = "0%d" % (frameNo +1)
             else:
@@ -164,7 +167,8 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
             frameName = "%s/%s.%s.%s" % (tempDir, fileName, frameCount, frameFormat)
             os.rename("00000001.jpg", frameName)
             frameNames.append(frameName)
+            grabTimes.append(time)
         else:
             onError(10, frameNo +1)
             
-    return frameNames
+    return (frameNames, grabTimes)

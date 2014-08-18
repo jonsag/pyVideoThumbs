@@ -2,11 +2,7 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import ConfigParser, os, getopt, sys, shlex
-
-from subprocess import call, check_output, Popen, PIPE
-
-from PIL import Image
+import ConfigParser, os, getopt, sys
 
 from error import *
 from video import *
@@ -25,13 +21,22 @@ rightMargin = int(config.get('contactsheets', 'rightMargin'))
 bottomMargin = int(config.get('contactsheets', 'bottomMargin'))
 thumbPadding = int(config.get('contactsheets', 'thumbPadding'))
 sheetBackground = config.get('contactsheets', 'sheetBackground')
-sheetParams = [sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground]
+infoHeight = int(config.get('contactsheets', 'infoHeight'))
+sheetParams = [sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight]
 
 startOffset = int(config.get('frameGrabbing', 'startOffset')) # parameters for the frame grabs
 endOffset = int(config.get('frameGrabbing', 'endOffset'))
 grabber = config.get('frameGrabbing', 'grabber')
 frameFormat = config.get('frameGrabbing', 'frameFormat')
 videoParams = [startOffset, endOffset, grabber, frameFormat]
+
+timeCode = config.get('timeCode', 'timeCode')
+tcPlace = config.get('timeCode', 'tcPlace')
+tcColour = config.get('timeCode', 'tcColour')
+tcOutlineColour = config.get('timeCode', 'tcOutlineColour')
+tcFont = config.get('timeCode', 'tcFont')
+tcSize = int(config.get('timeCode', 'tcSize'))
+tcParams = [timeCode, tcPlace, tcColour, tcOutlineColour, tcFont, tcSize]
 
 tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir')) # temporary dir, used to store frame grabs
 
@@ -91,42 +96,13 @@ else:
 if verbose:
     print "--- Temporary directory is %s" % tempDir
 
-def makeContactSheet(frameNames, (sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground), verbose):
-    sampleFrame = Image.open(frameNames[0])
-    thumbWidth, thumbHeight = sampleFrame.size
-    if verbose:
-        print "--- Thumbs width x height: %s x %s" % (thumbWidth, thumbHeight)
-
-    thumbs = [Image.open(frame).resize((thumbWidth, thumbHeight)) for frame in frameNames] # Read in all images and resize appropriately
-
-    marginsWidth = leftMargin + rightMargin # Calculate the size of the output image, based on the photo thumb sizes, margins, and padding
-    marginsHeight = topMargin + bottomMargin
-
-    paddingsWidth = (sheetColumns - 1) * thumbPadding
-    paddingsHeight = (sheetRows - 1) * thumbPadding
-    contactSheetSize = (sheetColumns * thumbWidth + marginsWidth + paddingsWidth, sheetRows * thumbHeight + marginsHeight + paddingsHeight)
-
-    contactSheet = Image.new('RGB', contactSheetSize, "rgb%s" % sheetBackground) # Create the new image
-
-    # Insert each thumb:
-    for rowNo in range(sheetRows):
-        for columnNo in range(sheetColumns):
-            left = leftMargin + columnNo * (thumbWidth + thumbPadding)
-            right = left + thumbWidth
-            upper = topMargin + rowNo * (thumbHeight + thumbPadding)
-            lower = upper + thumbHeight
-            bbox = (left, upper, right, lower)
-            try:
-                image = thumbs.pop(0)
-            except:
-                break
-            contactSheet.paste(image, bbox)
-    return contactSheet
-
 ############### single video file ###############
 if file:
     print "\n%s\n------------------------------------------------------------------" % file
-    frameNames = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
 
-    contactSheet = makeContactSheet(frameNames, sheetParams, verbose) # create the contact sheet                                                                                    
-    contactSheet.save('bs.png') # save contact sheet
+    frameNames, grabTimes = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
+
+    contactSheet = makeContactSheet(frameNames, grabTimes, sheetParams, tcParams, tempDir, verbose) # create the contact sheet
+
+    fileName = os.path.basename(file)
+    contactSheet.save("%s.png" % fileName) # save contact sheet
