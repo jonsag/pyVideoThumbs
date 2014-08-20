@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import os, datetime
+import os, datetime, sys
 
 from PIL import Image, ImageChops, ImageFont, ImageDraw
 
@@ -10,31 +10,39 @@ from decimal import Decimal, getcontext
 
 from datetime import timedelta
 
-getcontext().prec = 3 # precision of floating point
+getcontext().prec = 5 # precision of floating point
 
-def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, verbose):
+def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose):
     sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
 
     trimmedFrames = []
     frameNo = 0
 
-    if verbose:
-        originalFrame = Image.open(frameNames[0])
-        originalWidth, originalHeight = originalFrame.size
-        print "--- Original width x height: %s x %s px" % (originalWidth, originalHeight)
+    infoHeight = sheetWidth * infoHeight / 100
 
-    print "--- Trimming frames"
+    print "--- Trimming borders"
+    noFrames = len(frameNames)
     for frame in frameNames: # removing borders from screen shots
         frameNo += 1
-        trimmedFileName = "%s/%s.trimmed.png" % (tempDir, os.path.splitext(os.path.basename(frame))[0])
         if verbose:
             print "--- Removing borders from frame #%s" % frameNo
+        else:
+            countDown = noFrames - frameNo + 1
+            progress = "%s " % countDown
+            sys.stdout.write(progress)
+            sys.stdout.flush()
         image = Image.open(frame)
-        trimmedFrame = removeBorders(image, verbose)        
+        trimmedFrame = removeBorders(image, verbose)
+        if verbose:
+            trWidth, trHeight = trimmedFrame.size
+            print "--- Trimmed size width x height: %s x %s px" % (trWidth, trHeight)
+        trimmedFileName = "%s/%s.trimmed.png" % (tempDir, os.path.splitext(os.path.basename(frame))[0])
         trimmedFrame.save(trimmedFileName)
         trimmedFrames.append(trimmedFileName)
 
-    if verbose:
+    if not verbose:
+        print
+    else:
         print "--- Calculating thumb size"
 
     trimmedFrame = Image.open(trimmedFrames[0])
@@ -43,49 +51,70 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
     trimmedHeight = Decimal(trimmedHeight)
     trimmedRatio = trimmedWidth / trimmedHeight
 
-    if trimmedWidth >= trimmedHeight:
-        thumbWidth = (sheetWidth - leftMargin - rightMargin - (sheetColumns -1) * thumbPadding) / sheetColumns
-        thumbHeight = thumbWidth / trimmedRatio
-    else:
-        thumbHeight = (sheetHeight - topMargin - bottomMargin - infoHeight - (sheetRows -1) * thumbPadding) / sheetRows
-        thumbWidth = thumbHeight * trimmedRatio
-
-    sheetW = leftMargin + rightMargin + (sheetColumns - 1) * thumbPadding + thumbWidth * sheetColumns
-    sheetH = topMargin + bottomMargin + infoHeight + (sheetRows - 1) * thumbPadding + thumbHeight * sheetRows
-
-    if verbose:
+    thumbWidth = (sheetWidth - leftMargin - rightMargin - (sheetColumns -1) * thumbPadding) / sheetColumns
+    thumbHeight = int(thumbWidth / trimmedRatio)
+    
+    if info or verbose:
         print "--- Trimmed width x height: %s x %s px" % (trimmedWidth, trimmedHeight)
         print "--- Trimmed ratio: %s" % trimmedRatio
         print "--- Thumbs will be width x height: %s x %s px" % (thumbWidth, thumbHeight)
-        print "--- Contactsheet will be width x height: %s x %s px" % (sheetW, sheetH)
         
     print "--- Creating thumbs"
-    thumbFrames = makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, tempDir, verbose)
+    thumbs = makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, tempDir, verbose) # create thumbs from screen shots
+    thumbs = [Image.open(frame).resize((thumbWidth, thumbHeight)) for frame in thumbs] # read in all images and resize appropriately
 
-    thumbs = [Image.open(frame).resize((thumbWidth, thumbHeight)) for frame in thumbFrames] # Read in all images and resize appropriately
-
-    marginsWidth = leftMargin + rightMargin # Calculate the size of the output image, based on the photo thumb sizes, margins, and padding
+    marginsWidth = leftMargin + rightMargin # calculate the size of the output image, based on the photo thumb sizes, margins, and padding
     marginsHeight = topMargin + bottomMargin
 
     paddingsWidth = (sheetColumns - 1) * thumbPadding
     paddingsHeight = (sheetRows - 1) * thumbPadding + infoHeight
-    contactSheetSize = (sheetColumns * thumbWidth + marginsWidth + paddingsWidth, sheetRows * thumbHeight + marginsHeight + paddingsHeight)
+    #sheetWidth = int(float(sheetColumns * thumbWidth + marginsWidth + paddingsWidth))
+    #sheetHeight = int(float(sheetRows * thumbHeight + marginsHeight + paddingsHeight))
+    sheetWidth = sheetColumns * thumbWidth + marginsWidth + paddingsWidth
+    sheetHeight = sheetRows * thumbHeight + marginsHeight + paddingsHeight
+
+    contactSheetSize = (sheetWidth, sheetHeight)
 
     print "--- Creating contactsheet"
     contactSheet = Image.new('RGB', contactSheetSize, sheetBackground) # create the new image
+    
+    if info or verbose:
+        print "--- Contact sheet is width x height: %s x %s px" % (sheetWidth, sheetHeight)
+
+    thumbNo = 0
+    if not verbose:
+        print "--- Inserting thumbs"
 
     for rowNo in range(sheetRows): # insert thumbs into contact sheet
         for columnNo in range(sheetColumns):
-            left = leftMargin + columnNo * (thumbWidth + thumbPadding)
-            right = left + thumbWidth
-            upper = topMargin + rowNo * (thumbHeight + thumbPadding) + infoHeight
-            lower = upper + thumbHeight
+            left = leftMargin + columnNo * (thumbWidth + thumbPadding) # left X coordinate                                                                             
+            upper = infoHeight + topMargin + rowNo * (thumbHeight + thumbPadding) # left Y coordinate
+            right = left + thumbWidth # right X coordinate
+            lower = upper + thumbHeight # right Y coordinate
             bbox = (left, upper, right, lower)
             try:
                 image = thumbs.pop(0)
             except:
                 break
-            contactSheet.paste(image, bbox)
+            thumbNo += 1
+            if verbose:
+                print "--- Inserting thumb #%s at %s, %s, %s, %s. Gives a thumb size of %s x %s px" % (thumbNo, left, upper, right, lower, right - left, lower - upper)
+            else:
+                countDown = noFrames - thumbNo + 1
+                progress = "%s " % countDown
+                sys.stdout.write(progress)
+                sys.stdout.flush()
+            try:
+                contactSheet.paste(image, bbox)
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+                if not verbose:
+                    print
+                print "*** Error inserting thumb #%s" % thumbNo
+                break
+
+    if not verbose:
+        print
 
     contactSheet = addInfo(contactSheet, infoParams, fileInfo, infoHeight, verbose)
 
@@ -108,19 +137,29 @@ def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, temp
     size = thumbWidth, thumbHeight
     tcSize = thumbHeight * tcSize / 100
 
+    noFrames = len(trimmedFrames)
     for frame in trimmedFrames:
         frameNo += 1
         thumbFileName = "%s/%s.thumb.png" % (tempDir, os.path.splitext(os.path.basename(frame))[0])
         if verbose:
-            print "--- Creating thumb #%s" % frameNo
+            print "--- Creating thumb #%s to width x height: %s x %s px" % (frameNo, thumbWidth, thumbHeight)
+        else:
+            countDown = noFrames - frameNo + 1
+            progress = "%s " % countDown
+            sys.stdout.write(progress)
+            sys.stdout.flush()
         thumb = Image.open(frame) # open screen shot
         thumb.thumbnail(size, Image.ANTIALIAS) # resize to thumb size
+        if verbose:
+            thWidth, thHeight = thumb.size
+            print "--- New size width x height: %s x %s px" % (thWidth, thHeight)
 
         if timeCode: # if time code should be added to thumb
+            grabTime = str(timedelta(seconds=grabTimes[frameNo - 1])) # time when screen shot was taken
+
             if verbose:
                 print "--- Inserting time code %s" % grabTime
 
-            grabTime = str(timedelta(seconds=grabTimes[frameNo - 1])) # time when screen shot was taken
             if tcPlace == "tl":
                 tcX = 10
                 tcY = 10
@@ -131,14 +170,13 @@ def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, temp
             thumb = printTextOutline(thumb, tcX, tcY, grabTime, tcOutlineColour, tcFont, tcSize) # print text outline
             draw = ImageDraw.Draw(thumb)
             font = ImageFont.truetype(tcFont, tcSize)
-            #draw.text((tcX + 1, tcY), grabTime, tcOutlineColour, font=font) # drawing the outline colour
-            #draw.text((tcX - 1, tcY), grabTime, tcOutlineColour, font=font)
-            #draw.text((tcX, tcY - 1), grabTime, tcOutlineColour, font=font)
-            #draw.text((tcX, tcY + 1), grabTime, tcOutlineColour, font=font)
             draw.text((tcX, tcY), grabTime, tcColour, font=font) # drawing with the fill colour
 
         thumb.save(thumbFileName)
         thumbFrames.append(thumbFileName)
+
+    if not verbose:
+        print
 
     return thumbFrames
 

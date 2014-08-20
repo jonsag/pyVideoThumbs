@@ -25,8 +25,8 @@ def onError(errorCode, extra):
         print "%s is not a directory" % extra
         sys.exit(errorCode)
     elif errorCode == 7:
-        print "Opted not to create temporary directory %s" % extra
-        sys.exit(7)
+        print "Opted not to create directory %s" % extra
+        sys.exit(errorCode)
     elif errorCode == 8:
         print "Temporary directory %s not writeable" % extra
         sys.exit(errorCode)
@@ -38,14 +38,22 @@ def onError(errorCode, extra):
     elif errorCode == 10:
         print "*** Could not create frame# %s" % extra
         raw_input('Press [Return] key to continue')
+    elif errorCode == 11:
+        print "*** %s is not a valid directory" % extra
+        usage(errorCode)
+    elif errorCode == 12:
+        print "No write access at %s either" % extra
+        sys.exit(errorCode)
 
 def usage(exitCode):
     print "\nUsage:"
     print "----------------------------------------"
-    print "%s -f <file> [-i]" % sys.argv[0]
-    print "  Options: -i if you want to display file 'i'nfo"
-    print "    OR\n"
-    print "%s -p <directory> [-i]" % sys.argv[0]
+    print "%s -f <file> [-o <directory>] [-i]" % sys.argv[0]
+    print "  Creates a single contact sheet for <file> [and puts it in <directory> ]"
+    print "    Options: -i if you want to display file 'i'nfo"
+    print "      OR\n"
+    print "%s -p <in directory> [-o <out directory>][-i]" % sys.argv[0]
+    print "  Scans <in directory> for video files, creates contact sheets from them [and puts them in <outdirectory>]"
     print "  Options: -i if you want to display file 'i'nfo"
 
     sys.exit(exitCode)

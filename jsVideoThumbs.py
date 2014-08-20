@@ -7,9 +7,12 @@ import ConfigParser, os, getopt, sys
 from error import *
 from video import *
 from image import *
+from misc import *
 
 config = ConfigParser.ConfigParser() # define config file
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__))) # read config file
+
+videoTypes = config.get('video', 'videoTypes') # allowed file types
 
 sheetWidth = int(config.get('contactsheets', 'sheetWidth')) # paramaters for the contact sheet
 sheetHeight = int(config.get('contactsheets', 'sheetHeight'))
@@ -48,7 +51,7 @@ tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir')) #
 
 ############### handle arguments ###############
 try:
-    myopts, args = getopt.getopt(sys.argv[1:],'f:p:ivh' , ['file=', 'path=', 'info', 'verbose', 'help'])
+    myopts, args = getopt.getopt(sys.argv[1:],'f:p:o:ivh' , ['file=', 'path=', 'outdir', 'info', 'verbose', 'help'])
 
 except getopt.GetoptError as e:
     onError(1, str(e))
@@ -58,8 +61,10 @@ if len(sys.argv) == 1: # no options passed
 
 file = ""
 path = ""
+outDir = ""
 info = False
 verbose = False
+outDir = ""
 
 for option, argument in myopts:
     if option in ('-f', '--file'):
@@ -72,6 +77,8 @@ for option, argument in myopts:
         path = argument
         if not os.path.isdir(path):
             onError(6, path)
+    elif option in ('-o', '--outdir'):
+        outDir = argument
     elif option in ('-i', '--info'):
         info = True
     elif option in ('-v', '--verbose'):
@@ -87,28 +94,36 @@ if file and path:
 # checking temporary directory
 if not os.path.isdir(tempDir):
     print "Temporary directory %s does not exist" % tempDir
-    while True:
-        createTempDir = raw_input('Do you want to create it? (Y/n)')
-        if createTempDir.lower() == "y" or not createTempDir:
-            os.makedirs(tempDir)
-            break
-        elif createTempDir.lower() == "n":
-            onError(7, tempDir)
-
+    tempDir = makeDir(os.getcwd(), tempDir)
 else:
     if not os.access(tempDir, os.W_OK):
         onError(8, tempDir)
-
 if verbose:
     print "--- Temporary directory is %s" % tempDir
 
+# checking out directory
+if outDir and os.path.isdir(os.path.join(os.getcwd(), outDir)): # if directory exist in current path
+    outDir = os.path.join(os.getcwd(), outDir)
+elif file and outDir and os.path.isdir(os.path.join(os.path.dirname(file), outDir)): # if file and outdir is given and, outdir exist in files directory
+    outDir = os.path.join(os.path.dirname(file), outDir)
+elif file and outDir and not os.path.isdir(os.path.join(os.path.dirname(file), outDir)): # if file and outdir is given, and outdir does NOT exist in file's directory
+    print "*** Out directory %s doesn't exist" % os.path.join(os.path.dirname(file), outDir)
+    outDir = makeDir(os.path.dirname(file), outDir)
+elif path and outDir and os.path.isdir(os.path.join(path, outDir)): # if path and outdir is given and outdir exist in path's directory
+    outDir = os.path.join(path, outDir)
+elif path and outDir and not os.path.isdir(os.path.join(path, outDir)): # if path and outdir is given and outdir does NOT exist in path's directory
+    print "*** Out directory %s doesn't exist" % os.path.join(path, outDir)
+    outDir = makeDir(path, outDir)
+else:
+    outDir = os.getcwd()
+
+if verbose:
+    print "--- Output directory is %s" % outDir
+
 ############### single video file ###############
 if file:
-    print "\n%s\n------------------------------------------------------------------" % file
-
-    frameNames, grabTimes, fileInfo = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
-
-    contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, verbose) # create the contact sheet
-
-    fileName = os.path.basename(file)
-    contactSheet.save("%s.png" % fileName) # save contact sheet
+    if checkIfVideo(file, videoTypes, verbose):
+        frameNames, grabTimes, fileInfo = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
+        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose) # create the contact sheet
+        fileName = os.path.basename(file)
+        contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet

@@ -8,6 +8,23 @@ from subprocess import call, check_output, Popen, PIPE
 
 from error import *
 
+def checkIfVideo(file, videoTypes, verbose):
+    isVideo = False
+    
+    if verbose:
+        print "--- Checking %s" % file
+
+    extension = os.path.splitext(file)[1].lstrip('.')
+
+    if extension in videoTypes:
+        if os.path.isfile and not os.path.islink(file):
+            if verbose:
+                print "--- This is not a link and is a valid video file"
+            print "\n%s\n------------------------------------------------------------------" % file
+        isVideo = True
+
+    return isVideo
+
 def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     startOffset, endOffset, grabber, frameFormat = videoParams    
@@ -128,8 +145,11 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
         time = (startOffset + frameNo * interval) / 1000
         if verbose:
             print "--- Grabbing frame #%s at %s seconds" % ((frameNo + 1), time)
-        #else:
-        #    print "%d " % (frameNo + 1),
+        else:
+            countDown = sheetColumns * sheetRows - frameNo
+            progress = "%s " % countDown
+            sys.stdout.write(progress)
+            sys.stdout.flush()
 
         cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'"  % (time, frameFormat, file) 
         args = shlex.split(cmd)
@@ -152,5 +172,8 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
             grabTimes.append(time)
         else:
             onError(10, frameNo +1)
+
+    if not verbose:
+        print
             
     return (frameNames, grabTimes)
