@@ -12,7 +12,7 @@ from misc import *
 config = ConfigParser.ConfigParser() # define config file
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__))) # read config file
 
-videoTypes = config.get('video', 'videoTypes') # allowed file types
+videoTypes = (config.get('video', 'videoTypes')).split(',') # allowed file types
 
 sheetWidth = int(config.get('contactsheets', 'sheetWidth')) # paramaters for the contact sheet
 sheetHeight = int(config.get('contactsheets', 'sheetHeight'))
@@ -51,7 +51,9 @@ tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir')) #
 
 ############### handle arguments ###############
 try:
-    myopts, args = getopt.getopt(sys.argv[1:],'f:p:o:ivh' , ['file=', 'path=', 'outdir', 'info', 'verbose', 'help'])
+    myopts, args = getopt.getopt(sys.argv[1:],
+                                 'f:p:o:ivh',
+                                 ['file=', 'path=', 'outdir', 'info', 'verbose', 'help'])
 
 except getopt.GetoptError as e:
     onError(1, str(e))
@@ -127,3 +129,15 @@ if file:
         contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose) # create the contact sheet
         fileName = os.path.basename(file)
         contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+
+############### scan path ###############
+if path:
+    foundVideos = findVideos(path, videoTypes, verbose)
+    
+    for myFile in foundVideos:
+        print "\n--- Now handling %s" % myFile
+        frameNames, grabTimes, fileInfo = generateFrames(myFile, videoParams, sheetParams, tempDir, info, verbose)
+        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose) # create the contact sheet
+        fileName = os.path.basename(myFile)
+        contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+            

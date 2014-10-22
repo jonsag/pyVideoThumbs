@@ -8,19 +8,34 @@ from subprocess import call, check_output, Popen, PIPE
 
 from error import *
 
+def findVideos(path, videoTypes, verbose):
+    foundVideos = []
+    
+    print "\n--- Searching %s for video files..." % path
+    for myFile in os.listdir(path):
+        if checkIfVideo(myFile, videoTypes, verbose):
+            foundVideos.append(myFile)
+            
+    return foundVideos
+
 def checkIfVideo(file, videoTypes, verbose):
     isVideo = False
+    correctExtension = False
     
     if verbose:
         print "--- Checking %s" % file
-
+    
     extension = os.path.splitext(file)[1].lstrip('.')
+    for myExtension in videoTypes:
+        if extension.lower() == myExtension.strip(" ").lower():
+            correctExtension = True
+            break
 
-    if extension in videoTypes:
-        if os.path.isfile and not os.path.islink(file):
+    if correctExtension:
+        if os.path.isfile and not os.path.islink(file) and not os.path.isdir(file):
             if verbose:
                 print "--- This is not a link and is a valid video file"
-            print "\n%s\n------------------------------------------------------------------" % file
+            #print "\n%s\n------------------------------------------------------------------" % file
         isVideo = True
 
     return isVideo
