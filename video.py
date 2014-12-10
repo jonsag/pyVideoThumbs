@@ -35,7 +35,7 @@ def checkIfVideo(file, videoTypes, verbose):
         if os.path.isfile and not os.path.islink(file) and not os.path.isdir(file):
             if verbose:
                 print "--- This is not a link and is a valid video file"
-            #print "\n%s\n------------------------------------------------------------------" % file
+            # print "\n%s\n------------------------------------------------------------------" % file
         isVideo = True
 
     return isVideo
@@ -54,7 +54,7 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     cmd = "mediainfo %s '%s'" % ("--Inform=General;%Duration%,%Duration/String3%,%BitRate%,%BitRate/String%,%Format%,%FileSize%,%FileSize/String%,%StreamSize%,%StreamSize/String%,%FileName%,%FileExtension%", file)
     args = shlex.split(cmd)
-    output, error = Popen(args, stdout = PIPE, stderr = PIPE).communicate()
+    output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
     output = output.rstrip()
     answer = output.split(',')
 
@@ -82,7 +82,7 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     cmd = "mediainfo %s '%s'" % ("--Inform=Video;%Duration%,%Duration/String3%,%Width%,%Height%,%BitRate%,%BitRate/String%,%FrameRate%,%FrameCount%,%Format%,%CodecID%,%PixelAspectRatio%,%DisplayAspectRatio%,%DisplayAspectRatio/String%,%Standard%,%StreamSize%,%StreamSize/String%", file)
     args = shlex.split(cmd)
-    output, error = Popen(args, stdout = PIPE, stderr = PIPE).communicate()
+    output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
     output = output.rstrip()
     answer = output.split(',')
 
@@ -112,7 +112,7 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     cmd = "mediainfo %s '%s'" % ("--Inform=Audio;%Duration%,%Duration/String3%,%BitRate%,%BitRate/String%,%Format%,%CodecID%,%StreamSize%,%StreamSize/String%", file)
     args = shlex.split(cmd)
-    output, error = Popen(args, stdout = PIPE, stderr = PIPE).communicate()
+    output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
     output = output.rstrip()
     answer = output.split(',')
 
@@ -132,10 +132,10 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     videoDurations = int(fileInfo['videoDurations'])
 
-    if startOffset + endOffset > videoDurations: # too short video
+    if startOffset + endOffset > videoDurations:  # too short video
         onError(9, videoDurations)
 
-    interval = (videoDurations - startOffset - endOffset) / (sheetColumns * sheetRows) # how often to catch a frame                                                                 
+    interval = (videoDurations - startOffset - endOffset) / (sheetColumns * sheetRows)  # how often to catch a frame                                                                 
     if verbose:
         print "--- Will catch a frame every %s millisecond" % interval
 
@@ -166,18 +166,18 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
             sys.stdout.write(progress)
             sys.stdout.flush()
 
-        cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'"  % (time, frameFormat, file) 
+        cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'" % (time, frameFormat, file) 
         args = shlex.split(cmd)
-        output, error = Popen(args, stdout = PIPE, stderr = PIPE).communicate()
+        output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
 
-        #if error:
+        # if error:
         #    print error
 
         if os.path.isfile("00000001.jpg"):
             if verbose:
                 print "--- Moving frame #%s to temporary directory" % (frameNo + 1)
-            if frameNo + 1< 10:
-                frameCount = "0%d" % (frameNo +1)
+            if frameNo + 1 < 10:
+                frameCount = "0%d" % (frameNo + 1)
             else:
                 frameCount = frameNo + 1
 
@@ -186,7 +186,7 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
             frameNames.append(frameName)
             grabTimes.append(time)
         else:
-            onError(10, frameNo +1)
+            onError(10, frameNo + 1)
 
     if not verbose:
         print

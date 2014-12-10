@@ -9,12 +9,12 @@ from video import *
 from image import *
 from misc import *
 
-config = ConfigParser.ConfigParser() # define config file
-config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__))) # read config file
+config = ConfigParser.ConfigParser()  # define config file
+config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__)))  # read config file
 
-videoTypes = (config.get('video', 'videoTypes')).split(',') # allowed file types
+videoTypes = (config.get('video', 'videoTypes')).split(',')  # allowed file types
 
-sheetWidth = int(config.get('contactsheets', 'sheetWidth')) # paramaters for the contact sheet
+sheetWidth = int(config.get('contactsheets', 'sheetWidth'))  # paramaters for the contact sheet
 sheetHeight = int(config.get('contactsheets', 'sheetHeight'))
 sheetColumns = int(config.get('contactsheets', 'sheetColumns'))
 sheetRows = int(config.get('contactsheets', 'sheetRows'))
@@ -27,7 +27,7 @@ sheetBackground = config.get('contactsheets', 'sheetBackground')
 infoHeight = int(config.get('contactsheets', 'infoHeight'))
 sheetParams = [sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight]
 
-startOffset = int(config.get('frameGrabbing', 'startOffset')) # parameters for the frame grabs
+startOffset = int(config.get('frameGrabbing', 'startOffset'))  # parameters for the frame grabs
 endOffset = int(config.get('frameGrabbing', 'endOffset'))
 grabber = config.get('frameGrabbing', 'grabber')
 frameFormat = config.get('frameGrabbing', 'frameFormat')
@@ -47,7 +47,7 @@ infoFont = config.get('info', 'infoFont')
 infoSize = int(config.get('info', 'infoSize'))
 infoParams = [infoColour, infoOutlineColour, infoFont, infoSize]
 
-tempDir = os.path.join(os.path.expanduser("~"), config.get('paths','tempDir')) # temporary dir, used to store frame grabs
+tempDir = os.path.join(os.path.expanduser("~"), config.get('paths', 'tempDir'))  # temporary dir, used to store frame grabs
 
 ############### handle arguments ###############
 try:
@@ -58,7 +58,7 @@ try:
 except getopt.GetoptError as e:
     onError(1, str(e))
 
-if len(sys.argv) == 1: # no options passed
+if len(sys.argv) == 1:  # no options passed
     onError(2, 2)
 
 file = ""
@@ -104,16 +104,16 @@ if verbose:
     print "--- Temporary directory is %s" % tempDir
 
 # checking out directory
-if outDir and os.path.isdir(os.path.join(os.getcwd(), outDir)): # if directory exist in current path
+if outDir and os.path.isdir(os.path.join(os.getcwd(), outDir)):  # if directory exist in current path
     outDir = os.path.join(os.getcwd(), outDir)
-elif file and outDir and os.path.isdir(os.path.join(os.path.dirname(file), outDir)): # if file and outdir is given and, outdir exist in files directory
+elif file and outDir and os.path.isdir(os.path.join(os.path.dirname(file), outDir)):  # if file and outdir is given and, outdir exist in files directory
     outDir = os.path.join(os.path.dirname(file), outDir)
-elif file and outDir and not os.path.isdir(os.path.join(os.path.dirname(file), outDir)): # if file and outdir is given, and outdir does NOT exist in file's directory
+elif file and outDir and not os.path.isdir(os.path.join(os.path.dirname(file), outDir)):  # if file and outdir is given, and outdir does NOT exist in file's directory
     print "*** Out directory %s doesn't exist" % os.path.join(os.path.dirname(file), outDir)
     outDir = makeDir(os.path.dirname(file), outDir)
-elif path and outDir and os.path.isdir(os.path.join(path, outDir)): # if path and outdir is given and outdir exist in path's directory
+elif path and outDir and os.path.isdir(os.path.join(path, outDir)):  # if path and outdir is given and outdir exist in path's directory
     outDir = os.path.join(path, outDir)
-elif path and outDir and not os.path.isdir(os.path.join(path, outDir)): # if path and outdir is given and outdir does NOT exist in path's directory
+elif path and outDir and not os.path.isdir(os.path.join(path, outDir)):  # if path and outdir is given and outdir does NOT exist in path's directory
     print "*** Out directory %s doesn't exist" % os.path.join(path, outDir)
     outDir = makeDir(path, outDir)
 else:
@@ -126,18 +126,19 @@ if verbose:
 if file:
     if checkIfVideo(file, videoTypes, verbose):
         frameNames, grabTimes, fileInfo = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
-        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose) # create the contact sheet
+        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose)  # create the contact sheet
         fileName = os.path.basename(file)
-        contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+        contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
 
 ############### scan path ###############
 if path:
     foundVideos = findVideos(path, videoTypes, verbose)
     
     for myFile in foundVideos:
-        print "\n--- Now handling %s" % myFile
+        print "\n%s" % myFile
+        print "-" * 40
         frameNames, grabTimes, fileInfo = generateFrames(myFile, videoParams, sheetParams, tempDir, info, verbose)
-        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose) # create the contact sheet
+        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose)  # create the contact sheet
         fileName = os.path.basename(myFile)
-        contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+        contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
             

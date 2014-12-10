@@ -10,7 +10,7 @@ from decimal import Decimal, getcontext
 
 from datetime import timedelta
 
-getcontext().prec = 5 # precision of floating point
+getcontext().prec = 5  # precision of floating point
 
 def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose):
     sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
@@ -22,7 +22,7 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
 
     print "--- Trimming borders"
     noFrames = len(frameNames)
-    for frame in frameNames: # removing borders from screen shots
+    for frame in frameNames:  # removing borders from screen shots
         frameNo += 1
         if verbose:
             print "--- Removing borders from frame #%s" % frameNo
@@ -51,7 +51,7 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
     trimmedHeight = Decimal(trimmedHeight)
     trimmedRatio = trimmedWidth / trimmedHeight
 
-    thumbWidth = (sheetWidth - leftMargin - rightMargin - (sheetColumns -1) * thumbPadding) / sheetColumns
+    thumbWidth = (sheetWidth - leftMargin - rightMargin - (sheetColumns - 1) * thumbPadding) / sheetColumns
     thumbHeight = int(thumbWidth / trimmedRatio)
     
     if info or verbose:
@@ -60,23 +60,23 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
         print "--- Thumbs will be width x height: %s x %s px" % (thumbWidth, thumbHeight)
         
     print "--- Creating thumbs"
-    thumbs = makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, tempDir, verbose) # create thumbs from screen shots
-    thumbs = [Image.open(frame).resize((thumbWidth, thumbHeight)) for frame in thumbs] # read in all images and resize appropriately
+    thumbs = makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, tempDir, verbose)  # create thumbs from screen shots
+    thumbs = [Image.open(frame).resize((thumbWidth, thumbHeight)) for frame in thumbs]  # read in all images and resize appropriately
 
-    marginsWidth = leftMargin + rightMargin # calculate the size of the output image, based on the photo thumb sizes, margins, and padding
+    marginsWidth = leftMargin + rightMargin  # calculate the size of the output image, based on the photo thumb sizes, margins, and padding
     marginsHeight = topMargin + bottomMargin
 
     paddingsWidth = (sheetColumns - 1) * thumbPadding
     paddingsHeight = (sheetRows - 1) * thumbPadding + infoHeight
-    #sheetWidth = int(float(sheetColumns * thumbWidth + marginsWidth + paddingsWidth))
-    #sheetHeight = int(float(sheetRows * thumbHeight + marginsHeight + paddingsHeight))
+    # sheetWidth = int(float(sheetColumns * thumbWidth + marginsWidth + paddingsWidth))
+    # sheetHeight = int(float(sheetRows * thumbHeight + marginsHeight + paddingsHeight))
     sheetWidth = sheetColumns * thumbWidth + marginsWidth + paddingsWidth
     sheetHeight = sheetRows * thumbHeight + marginsHeight + paddingsHeight
 
     contactSheetSize = (sheetWidth, sheetHeight)
 
     print "--- Creating contactsheet"
-    contactSheet = Image.new('RGB', contactSheetSize, sheetBackground) # create the new image
+    contactSheet = Image.new('RGB', contactSheetSize, sheetBackground)  # create the new image
     
     if info or verbose:
         print "--- Contact sheet is width x height: %s x %s px" % (sheetWidth, sheetHeight)
@@ -85,12 +85,12 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
     if not verbose:
         print "--- Inserting thumbs"
 
-    for rowNo in range(sheetRows): # insert thumbs into contact sheet
+    for rowNo in range(sheetRows):  # insert thumbs into contact sheet
         for columnNo in range(sheetColumns):
-            left = leftMargin + columnNo * (thumbWidth + thumbPadding) # left X coordinate                                                                             
-            upper = infoHeight + topMargin + rowNo * (thumbHeight + thumbPadding) # left Y coordinate
-            right = left + thumbWidth # right X coordinate
-            lower = upper + thumbHeight # right Y coordinate
+            left = leftMargin + columnNo * (thumbWidth + thumbPadding)  # left X coordinate                                                                             
+            upper = infoHeight + topMargin + rowNo * (thumbHeight + thumbPadding)  # left Y coordinate
+            right = left + thumbWidth  # right X coordinate
+            lower = upper + thumbHeight  # right Y coordinate
             bbox = (left, upper, right, lower)
             try:
                 image = thumbs.pop(0)
@@ -121,8 +121,8 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
     return contactSheet
 
 def removeBorders(file, verbose):
-    background = Image.new(file.mode, file.size, file.getpixel((0,0))) # create a new image with the same colour as pixel at 0, 0
-    diff = ImageChops.difference(file, background) # the absolute value of the difference between the original image and the new image
+    background = Image.new(file.mode, file.size, file.getpixel((0, 0)))  # create a new image with the same colour as pixel at 0, 0
+    diff = ImageChops.difference(file, background)  # the absolute value of the difference between the original image and the new image
     diff = ImageChops.add(diff, diff, 0.1, -100)
     bbox = diff.getbbox()
     if bbox:
@@ -148,14 +148,14 @@ def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, temp
             progress = "%s " % countDown
             sys.stdout.write(progress)
             sys.stdout.flush()
-        thumb = Image.open(frame) # open screen shot
-        thumb.thumbnail(size, Image.ANTIALIAS) # resize to thumb size
+        thumb = Image.open(frame)  # open screen shot
+        thumb.thumbnail(size, Image.ANTIALIAS)  # resize to thumb size
         if verbose:
             thWidth, thHeight = thumb.size
             print "--- New size width x height: %s x %s px" % (thWidth, thHeight)
 
-        if timeCode: # if time code should be added to thumb
-            grabTime = str(timedelta(seconds=grabTimes[frameNo - 1])) # time when screen shot was taken
+        if timeCode:  # if time code should be added to thumb
+            grabTime = str(timedelta(seconds=grabTimes[frameNo - 1]))  # time when screen shot was taken
 
             if verbose:
                 print "--- Inserting time code %s" % grabTime
@@ -167,10 +167,10 @@ def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, temp
                 tcX = 10
                 tcY = thumbHeight - 10 - tcSize
 
-            thumb = printTextOutline(thumb, tcX, tcY, grabTime, tcOutlineColour, tcFont, tcSize) # print text outline
+            thumb = printTextOutline(thumb, tcX, tcY, grabTime, tcOutlineColour, tcFont, tcSize)  # print text outline
             draw = ImageDraw.Draw(thumb)
             font = ImageFont.truetype(tcFont, tcSize)
-            draw.text((tcX, tcY), grabTime, tcColour, font=font) # drawing with the fill colour
+            draw.text((tcX, tcY), grabTime, tcColour, font=font)  # drawing with the fill colour
 
         thumb.save(thumbFileName)
         thumbFrames.append(thumbFileName)
@@ -183,7 +183,7 @@ def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, temp
 def printTextOutline(image, posX, posY, text, outlineColour, font, fontSize):
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype(font, fontSize)
-    draw.text((posX + 1, posY), text, outlineColour, font=font) # drawing the outline colour                                                                            
+    draw.text((posX + 1, posY), text, outlineColour, font=font)  # drawing the outline colour                                                                            
     draw.text((posX - 1, posY), text, outlineColour, font=font)
     draw.text((posX, posY - 1), text, outlineColour, font=font)
     draw.text((posX, posY + 1), text, outlineColour, font=font)
