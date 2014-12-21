@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import os, shlex
+import shlex, os, sys, re
 
 from subprocess import call, check_output, Popen, PIPE
 
-from error import *
+from error import onError
 
 def findVideos(path, videoTypes, verbose):
     foundVideos = []
@@ -40,19 +40,30 @@ def checkIfVideo(file, videoTypes, verbose):
 
     return isVideo
 
-def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
+def generateFrames(file, videoParams, sheetParams, tempDir, keepGoing, info, verbose):
 
     startOffset, endOffset, grabber, frameFormat = videoParams    
     sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
 
     answer = []
     fileInfo = {}
+    
+    newFileName = file.replace("'", "").replace("?", "")
+    
+    if file != newFileName:
+        print "*** File name contains ' (single quote), Renaming..."
+        print "--- Old name: %s" % file
+        print "--- New name: %s" % newFileName
+        os.rename(file, newFileName)
+        file = newFileName
 
     ##### general #####
     if verbose:
         print "--- Gathering general information..."
 
     cmd = "mediainfo %s '%s'" % ("--Inform=General;%Duration%,%Duration/String3%,%BitRate%,%BitRate/String%,%Format%,%FileSize%,%FileSize/String%,%StreamSize%,%StreamSize/String%,%FileName%,%FileExtension%", file)
+    if verbose:
+        print "*** Command: %s" % cmd
     args = shlex.split(cmd)
     output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
     output = output.rstrip()
@@ -141,11 +152,11 @@ def generateFrames(file, videoParams, sheetParams, tempDir, info, verbose):
 
     fileName = fileInfo['fileName']
     if grabber == "mplayer":
-        frameNames, grabTimes = mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose)
+        frameNames, grabTimes = mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, keepGoing, verbose)
 
     return (frameNames, grabTimes, fileInfo)
 
-def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, verbose):
+def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, keepGoing, verbose):
     startOffset, endOffset, grabber, frameFormat = videoParams
     sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
 
@@ -186,7 +197,10 @@ def mplayerGrabber(file, interval, fileName, videoParams, sheetParams, tempDir, 
             frameNames.append(frameName)
             grabTimes.append(time)
         else:
-            onError(10, frameNo + 1)
+            if keepGoing:
+                print "\n*** Could not grab frame #%s. Skipping..." % str(frameNo + 1)
+            else:
+                onError(10, frameNo + 1)
 
     if not verbose:
         print

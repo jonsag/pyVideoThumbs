@@ -4,7 +4,7 @@
 
 import os
 
-from error import *
+#from error import onError
 
 def makeDir(path, name):
     while True:
@@ -27,6 +27,6 @@ def makeDir(path, name):
                 os.makedirs(os.path.join(path, name))
                 dir = os.path.join(path, name)
                 break
-        elif createOutDir.lower() == "n":
+        elif createDir.lower() == "n":
             onError(7, os.path.join(path, name))
     return dir

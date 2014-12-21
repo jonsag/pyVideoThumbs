@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
+#from pyVideoThumbs import startOffset, endOffset, sheetColumns, sheetRows
+
 import sys
 
 def onError(errorCode, extra):
@@ -51,7 +53,7 @@ def usage(exitCode):
     print "%s -f <file> [-o <directory>] [-i]" % sys.argv[0]
     print "  Creates a single contact sheet for <file> [and puts it in <directory> ]"
     print "    Options: -i if you want to display file 'i'nfo"
-    print "      OR\n"
+    print 
     print "%s -p <in directory> [-o <out directory>][-i]" % sys.argv[0]
     print "  Scans <in directory> for video files, creates contact sheets from them [and puts them in <outdirectory>]"
     print "  Options: -i if you want to display file 'i'nfo"

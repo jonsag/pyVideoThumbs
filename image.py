@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import os, datetime, sys
+import sys, os
 
 from PIL import Image, ImageChops, ImageFont, ImageDraw
 

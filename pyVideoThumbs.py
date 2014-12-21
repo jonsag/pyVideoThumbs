@@ -4,10 +4,15 @@
 
 import ConfigParser, os, getopt, sys
 
+#from misc import makeDir
+#from error import usage, onError
+#from video import checkIfVideo, generateFrames
+#from image import makeContactSheet
+
+from misc import *
 from error import *
 from video import *
 from image import *
-from misc import *
 
 config = ConfigParser.ConfigParser()  # define config file
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__)))  # read config file
@@ -52,8 +57,8 @@ tempDir = os.path.join(os.path.expanduser("~"), config.get('paths', 'tempDir')) 
 ############### handle arguments ###############
 try:
     myopts, args = getopt.getopt(sys.argv[1:],
-                                 'f:p:o:ivh',
-                                 ['file=', 'path=', 'outdir', 'info', 'verbose', 'help'])
+                                 'f:p:o:kivh',
+                                 ['file=', 'path=', 'outdir', 'keepgoing', 'info', 'verbose', 'help'])
 
 except getopt.GetoptError as e:
     onError(1, str(e))
@@ -66,6 +71,7 @@ path = ""
 outDir = ""
 info = False
 verbose = False
+keepGoing = False
 outDir = ""
 
 for option, argument in myopts:
@@ -81,6 +87,8 @@ for option, argument in myopts:
             onError(6, path)
     elif option in ('-o', '--outdir'):
         outDir = argument
+    elif option in ('-k', '--keepgoing'):
+        keepGoing = True
     elif option in ('-i', '--info'):
         info = True
     elif option in ('-v', '--verbose'):
@@ -125,10 +133,10 @@ if verbose:
 ############### single video file ###############
 if file:
     if checkIfVideo(file, videoTypes, verbose):
-        frameNames, grabTimes, fileInfo = generateFrames(file, videoParams, sheetParams, tempDir, info, verbose)
-        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose)  # create the contact sheet
+        frameNames, grabTimes, fileInfo = generateFrames(file, videoParams, sheetParams, tempDir, keepGoing, info, verbose)
+        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose) # create the contact sheet
         fileName = os.path.basename(file)
-        contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
+        contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
 
 ############### scan path ###############
 if path:
@@ -137,7 +145,7 @@ if path:
     for myFile in foundVideos:
         print "\n%s" % myFile
         print "-" * 40
-        frameNames, grabTimes, fileInfo = generateFrames(myFile, videoParams, sheetParams, tempDir, info, verbose)
+        frameNames, grabTimes, fileInfo = generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, verbose)
         contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, infoParams, tempDir, info, verbose)  # create the contact sheet
         fileName = os.path.basename(myFile)
         contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
