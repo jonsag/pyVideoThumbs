@@ -49,12 +49,12 @@ tempDir = os.path.join(os.path.expanduser("~"), config.get('paths', 'tempDir')) 
 
 def makeDir(path, name):
     while True:
-        createDir = raw_input('Do you want to create it? (Y/n)')
+        createDir = raw_input('Do you want to create it? (Y/n) ')
         if createDir.lower() == "y" or not createDir:
             if not os.access(path, os.W_OK):
                 print "*** You do not have write access to %s" % path
                 while True:
-                    createDir = raw_input('Do you want to create it here instead? (Y/n)')
+                    createDir = raw_input('Do you want to create it here instead? (Y/n) ')
                     if createDir.lower() == "y" or not createDir:
                         if os.access(os.getcwd(), os.W_OK):
                             os.makedirs(os.path.join(os.getcwd(), name))
@@ -135,6 +135,21 @@ def contactSheetExist(path, myFile, outDir, verbose):
         exists = False
         
     return exists
+
+def confirm(message, verbose):
+    while True:
+        answer = raw_input('Are you sure you want to %s? (Y/n) ' % message)
+        if answer.lower() == "y" or not answer:
+            confirmed = True
+            break
+        elif answer.lower() == "n":
+            confirmed = False
+            break
+    return confirmed
+
+        
+    
+    
     
     
     

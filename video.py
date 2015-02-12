@@ -48,22 +48,7 @@ def checkIfVideo(myFile, videoTypes, verbose):
 
     return isVideo
 
-def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, verbose):
-    startOffset, endOffset, grabber, frameFormat = videoParams    
-    sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
-
-    answer = []
-    fileInfo = {}
-    
-    newFileName = myFile.replace("'", "").replace("?", "")
-    
-    if myFile != newFileName:
-        print "*** File name contains ' (single quote), Renaming..."
-        print "--- Old name: %s" % myFile
-        print "--- New name: %s" % newFileName
-        os.rename(myFile, newFileName)
-        myFile = newFileName
-
+def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):    
     ##### general #####
     if verbose:
         print "--- Gathering general information..."
@@ -100,8 +85,6 @@ def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, v
                 "fileName", 
                 "fileExtension"):
         fileInfo[key] = answer[infoNo]
-        if verbose:
-            print "    %s: %s" % (key, answer[infoNo])
         infoNo += 1
     
     if info:
@@ -163,8 +146,6 @@ def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, v
                 "videoStreamSizeb", 
                 "videoStreamSize"):
         fileInfo[key] = answer[infoNo]
-        if verbose:
-            print "    %s: %s" % (key, answer[infoNo])
         infoNo += 1
 
     if info:
@@ -213,8 +194,6 @@ def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, v
                 "audioStreamSizeb", 
                 "audioStreamSize"):
         fileInfo[key] = answer[infoNo]
-        if verbose:
-            print "    %s: %s" % (key, answer[infoNo])
         infoNo += 1
 
     if info:
@@ -225,6 +204,25 @@ def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, v
         print "Codec ID: %s" % fileInfo['audioCodecID']
         print "Stream Size: %s b, %s" % (fileInfo['audioStreamSizeb'], fileInfo['audioStreamSize'])
         print error
+        
+    return fileInfo
+
+def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, verbose):
+    startOffset, endOffset, grabber, frameFormat = videoParams    
+    sheetWidth, sheetHeight, sheetColumns, sheetRows, leftMargin, topMargin, rightMargin, bottomMargin, thumbPadding, sheetBackground, infoHeight = sheetParams
+
+    fileInfo = {}
+    
+    newFileName = myFile.replace("'", "").replace("?", "")
+    
+    if myFile != newFileName:
+        print "*** File name contains ' (single quote), Renaming..."
+        print "--- Old name: %s" % myFile
+        print "--- New name: %s" % newFileName
+        os.rename(myFile, newFileName)
+        myFile = newFileName
+        
+    fileInfo = getVideoInfo(myFile, fileInfo, info, keepGoing, verbose)
 
     try:
         videoDurations = int(fileInfo['videoDurations'])

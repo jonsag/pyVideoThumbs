@@ -10,7 +10,7 @@ import getopt, os, sys
 #from image import makeContactSheet
 
 from error import onError, usage
-from misc import (makeDir, 
+from misc import (makeDir, confirm, 
                   tempDir, videoTypes, 
                   videoParams, sheetParams, tcParams, infoParams)
 from video import checkIfVideo, generateFrames, findVideos
@@ -63,7 +63,11 @@ for option, argument in myopts:
     elif option in ('-k', '--keepgoing'):
         keepGoing = True
     elif option in ('-r', '--rename'):
-        noRename = False
+        if confirm("rename files", verbose):
+            noRename = False
+        else:
+            print "--- Restart without rename option"
+            sys.exit(0)
     elif option in ('-i', '--info'):
         info = True
     elif option in ('-v', '--verbose'):

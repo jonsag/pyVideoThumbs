@@ -19,15 +19,16 @@ def onError(errorCode, extra):
 def usage(exitCode):
     print "\nUsage:"
     print "----------------------------------------"
-    print "%s -f <file> [-o <directory>] [-i -k -v]" % sys.argv[0]
-    print "  Creates a single contact sheet for <file> [and puts it in <directory> ]"
+    print "%s -f <in file> [-o <out directory>] [-i -k -r -v]" % sys.argv[0]
+    print "  Creates a single contact sheet for <in file> [and puts it in <out directory> ]"
     print 
-    print "%s -p <in directory> [-o <out directory>][-i -k -v]" % sys.argv[0]
+    print "%s -p <in directory> [-o <out directory>][-i -k -r -v]" % sys.argv[0]
     print "  Scans <in directory> for video files, creates contact sheets from them [and puts them in <outdirectory>]"
     print
     print "    Otions:"
     print "    -i display file 'i'nfo"
     print "    -k 'k'eep going on errors"
+    print "    -r 'r'ename files to safe file names"
     print "    -v 'v'erbose output"
     print
     print "%s -h" % sys.argv[0]
