@@ -4,7 +4,7 @@
 
 import sys, os
 
-from PIL import Image, ImageChops, ImageFont, ImageDraw
+from PIL import Image, ImageChops, ImageFont, ImageDraw, ImageStat
 
 from decimal import Decimal, getcontext
 
@@ -120,13 +120,23 @@ def makeContactSheet(frameNames, grabTimes, fileInfo, sheetParams, tcParams, inf
 
     return contactSheet
 
-def removeBorders(file, verbose):
-    background = Image.new(file.mode, file.size, file.getpixel((0, 0)))  # create a new image with the same colour as pixel at 0, 0
-    diff = ImageChops.difference(file, background)  # the absolute value of the difference between the original image and the new image
-    diff = ImageChops.add(diff, diff, 0.1, -100)
-    bbox = diff.getbbox()
-    if bbox:
-        return file.crop(bbox)
+def removeBorders(myFile, verbose):
+    trim = False
+    
+    stat = ImageStat.Stat(myFile)
+    for low, high in stat.extrema:
+        if int(high) - int(low) >= 3:
+            trim = True
+            
+    if trim:
+        background = Image.new(myFile.mode, myFile.size, myFile.getpixel((0, 0)))  # create a new image with the same colour as pixel at 0, 0
+        diff = ImageChops.difference(myFile, background)  # the absolute value of the difference between the original image and the new image
+        diff = ImageChops.add(diff, diff, 0.1, -100)
+        bbox = diff.getbbox()
+        if bbox:
+            myFile = myFile.crop(bbox)
+    
+    return myFile
 
 def makeThumbs(trimmedFrames, tcParams, grabTimes, thumbWidth, thumbHeight, tempDir, verbose):
     timeCode, tcPlace, tcColour, tcOutlineColour, tcFont, tcSize = tcParams
