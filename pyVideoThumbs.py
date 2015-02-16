@@ -118,21 +118,32 @@ if myFile:
                                                          tempDir, 
                                                          keepGoing, 
                                                          info, verbose)
-        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, 
-                                        sheetParams, 
-                                        tcParams, 
-                                        infoParams, 
-                                        tempDir, 
-                                        info, verbose) # create the contact sheet
-        fileName = os.path.basename(myFile)
-        contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+        if frameNames:
+            contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, 
+                                            sheetParams, 
+                                            tcParams, 
+                                            infoParams, 
+                                            tempDir, 
+                                            info, verbose) # create the contact sheet
+            
+            fileName = os.path.basename(myFile)
+            contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+        else:
+            print "*** Could not grab any frames\n    Skipping video"
 
 ############### scan path ###############
 if path:
+    videoNo = 0
+    
     foundVideos = findVideos(path, videoTypes, keepGoing, noRename, outDir, verbose)
+        
+    foundVideos = sorted(foundVideos)
+    noVideos = len(foundVideos)
     
     for myFile in foundVideos:
-        print "\n%s" % myFile
+        videoNo += 1
+        print "\n%s/%s" % (videoNo, noVideos)
+        print "%s" % myFile
         print "-" * 40
         frameNames, grabTimes, fileInfo = generateFrames(myFile, 
                                                          videoParams, 
@@ -140,12 +151,16 @@ if path:
                                                          tempDir, 
                                                          keepGoing, 
                                                          info, verbose)
-        contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, 
-                                        sheetParams, 
-                                        tcParams, 
-                                        infoParams, 
-                                        tempDir, 
-                                        info, verbose)  # create the contact sheet
-        fileName = os.path.basename(myFile)
-        contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
+        
+        if frameNames:
+            contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, 
+                                            sheetParams, 
+                                            tcParams, 
+                                            infoParams, 
+                                            tempDir, 
+                                            info, verbose)  # create the contact sheet
+            fileName = os.path.basename(myFile)
+            contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
+        else:
+            print "*** Could not grab any frames\n    Skipping this video"
             

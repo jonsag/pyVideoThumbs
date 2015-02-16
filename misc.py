@@ -2,9 +2,13 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import os, re, ConfigParser
+import os, re, ConfigParser, shlex
 
+from datetime import datetime
+from time import sleep
 from error import onError
+from signal import SIGKILL
+from subprocess import Popen, STDOUT, PIPE
 
 config = ConfigParser.ConfigParser()  # define config file
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__)))  # read config file
@@ -46,6 +50,7 @@ infoParams = [infoColour, infoOutlineColour, infoFont, infoSize]
 
 tempDir = os.path.join(os.path.expanduser("~"), config.get('paths', 'tempDir'))  # temporary dir, used to store frame grabs
 
+timeOut = int(config.get('misc', 'timeOut'))
 
 def makeDir(path, name):
     while True:
@@ -146,6 +151,37 @@ def confirm(message, verbose):
             confirmed = False
             break
     return confirmed
+
+def executeCmd(cmd, verbose):
+    if verbose:
+        print "Cmd: %s" % cmd 
+    args = shlex.split(cmd)
+    
+    start = datetime.now()
+    proc = Popen(args, stdout=PIPE, stderr=PIPE)
+    while proc.poll() is None:
+        sleep(0.1)
+        now = datetime.now()
+        if (now - start).seconds > timeOut:
+            os.kill(proc.pid, SIGKILL)
+            os.waitpid(-1, os.WNOHANG)
+            return (None, None)
+    
+    #output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
+    
+    #proc = Popen(args,
+    #            stderr=STDOUT,  # merge stdout and stderr
+    #            stdout=PIPE,
+    #            shell=True)
+    
+    #stdoutdata, stderrdata = proc.communicate()
+    
+    output, error = proc.communicate()
+    
+    return (output, error)
+    
+    
+    
 
         
     

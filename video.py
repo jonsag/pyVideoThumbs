@@ -2,12 +2,10 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import shlex, os, sys
-
-from subprocess import Popen, PIPE
+import os, sys
 
 from error import onError
-from misc import checkFileName, contactSheetExist
+from misc import checkFileName, contactSheetExist, executeCmd
 
 def findVideos(path, videoTypes, keepGoing, noRename, outDir, verbose):
     foundVideos = []
@@ -52,7 +50,6 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
     ##### general #####
     if verbose:
         print "--- Gathering general information..."
-
     cmd = "mediainfo %s '%s'" % (("--Inform=General;"
                                   "%Duration%,"
                                   "%Duration/String3%,"
@@ -65,11 +62,14 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
                                   "%StreamSize/String%,"
                                   "%FileName%,"
                                   "%FileExtension%"), myFile)
-    if verbose:
-        print "--- Command: %s" % cmd
-    args = shlex.split(cmd)
-    output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
-    output = output.rstrip()
+    
+    output, error = executeCmd(cmd, verbose)
+    if output == None and error == None:
+        if keepGoing:
+            print "*** Execution took too long"
+        else:
+            onError(13, "Execution took too long")
+    
     answer = output.split(',')
 
     infoNo = 0
@@ -121,11 +121,14 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
                                   "%Standard%,"
                                   "%StreamSize%,"
                                   "%StreamSize/String%"), myFile)
-    if verbose:
-        print "--- Command: %s" % cmd
-    args = shlex.split(cmd)
-    output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
-    output = output.rstrip()
+    
+    output, error = executeCmd(cmd, verbose)
+    if output == None and error == None:
+        if keepGoing:
+            print "*** Execution took too long"
+        else:
+            onError(13, "Execution took too long")
+    
     answer = output.split(',')
 
     infoNo = 0
@@ -177,11 +180,14 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
                                   "%StreamSize%," 
                                   "%StreamSize/String%"), 
                                   myFile)
-    if verbose:
-        print "--- Command: %s" % cmd
-    args = shlex.split(cmd)
-    output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
-    output = output.rstrip()
+    
+    output, error = executeCmd(cmd, verbose)
+    if output == None and error == None:
+        if keepGoing:
+            print "*** Execution took too long"
+        else:
+            onError(13, "Execution took too long")
+    
     answer = output.split(',')
 
     infoNo = 0
@@ -228,7 +234,7 @@ def generateFrames(myFile, videoParams, sheetParams, tempDir, keepGoing, info, v
         videoDurations = int(fileInfo['videoDurations'])
     except:
         if not keepGoing:
-            onError(12, "*** Could not set duration from video info\n    Setting duration from general info instead")
+            onError(14, "*** Could not set duration from video info\n    Setting duration from general info instead")
         else:
             print "*** Could not set duration from video info\n    Setting duration from general info instead"
         videoDurations = int(fileInfo['generalDurations'])
@@ -257,8 +263,6 @@ def mplayerGrabber(myFile, interval, fileName, videoParams, sheetParams, tempDir
 
     print "--- Grabbing frames with mplayer"
 
-    # mplayer -nosound -ss $STEP -frames 1 -vo jpeg $FILE
-
     for frameNo in range (0, sheetColumns * sheetRows):
         time = (startOffset + frameNo * interval) / 1000
         if verbose:
@@ -269,14 +273,14 @@ def mplayerGrabber(myFile, interval, fileName, videoParams, sheetParams, tempDir
             sys.stdout.write(progress)
             sys.stdout.flush()
 
-        cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'" % (time, frameFormat, myFile)
-        if verbose:
-            print "Cmd: %s" % cmd 
-        args = shlex.split(cmd)
-        output, error = Popen(args, stdout=PIPE, stderr=PIPE).communicate()
-
-        # if error:
-        #    print error
+        cmd = "/usr/bin/mplayer -nosound -ss %s -frames 1 -vo %s '%s'" % (time, frameFormat, myFile)  
+              
+        output, error = executeCmd(cmd, verbose)
+        if output == None and error == None:
+            if keepGoing:
+                print "*** Execution took too long"
+            else:
+                onError(13, "Execution took too long")
 
         if os.path.isfile("00000001.jpg"):
             if verbose:
