@@ -70,7 +70,7 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
         else:
             onError(13, "Execution took too long")
     
-    answer = output.split(',')
+    answer = output.replace("\n", "").split(',')
 
     infoNo = 0
     for key in ("generalDurations", 
@@ -84,7 +84,14 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
                 "generalStreamSize", 
                 "fileName", 
                 "fileExtension"):
-        fileInfo[key] = answer[infoNo]
+        try:
+            fileInfo[key] = answer[infoNo]
+        except:
+            if not keepGoing:
+                onError(15, "*** Could not get '%s'" % key)
+            else:
+                print "*** Could not get '%s'" % key
+            fileInfo[key] = "NA"
         infoNo += 1
     
     if info:
@@ -129,7 +136,7 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
         else:
             onError(13, "Execution took too long")
     
-    answer = output.split(',')
+    answer = output.replace("\n", "").split(',')
 
     infoNo = 0
     for key in ("videoDurations", 
@@ -148,7 +155,14 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
                 "tvStandard", 
                 "videoStreamSizeb", 
                 "videoStreamSize"):
-        fileInfo[key] = answer[infoNo]
+        try:
+            fileInfo[key] = answer[infoNo]
+        except:
+            if not keepGoing:
+                onError(15, "*** Could not get '%s'" % key)
+            else:
+                print "*** Could not get '%s'" % key
+            fileInfo[key] = "NA"
         infoNo += 1
 
     if info:
@@ -188,7 +202,7 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
         else:
             onError(13, "Execution took too long")
     
-    answer = output.split(',')
+    answer = output.replace("\n", "").split(',')
 
     infoNo = 0
     for key in ("audioDurations", 
@@ -199,7 +213,14 @@ def getVideoInfo(myFile, fileInfo, info, keepGoing, verbose):
                 "audioCodecID", 
                 "audioStreamSizeb", 
                 "audioStreamSize"):
-        fileInfo[key] = answer[infoNo]
+        try:
+            fileInfo[key] = answer[infoNo]
+        except:
+            if not keepGoing:
+                onError(15, "*** Could not get '%s'" % key)
+            else:
+                print "*** Could not get '%s'" % key
+            fileInfo[key] = "NA"
         infoNo += 1
 
     if info:

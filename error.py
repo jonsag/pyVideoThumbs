@@ -12,9 +12,9 @@ def onError(errorCode, extra):
     elif errorCode in (4, 5, 6 ,7 ,8, 11, 12):
         print extra
         sys.exit(errorCode)
-    elif errorCode in (9, 10, 13, 14):
+    elif errorCode in (9, 10, 13, 14, 15):
         print extra
-        raw_input('Press [Return] key to continue')
+        raw_input("Press [Return] key to continue\n(Change this behaviour by adding option '-k')")
 
 def usage(exitCode):
     print "\nUsage:"

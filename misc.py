@@ -6,9 +6,11 @@ import os, re, ConfigParser, shlex
 
 from datetime import datetime
 from time import sleep
+
 from error import onError
+
 from signal import SIGKILL
-from subprocess import Popen, STDOUT, PIPE
+from subprocess import Popen, PIPE
 
 config = ConfigParser.ConfigParser()  # define config file
 config.read("%s/config.ini" % os.path.dirname(os.path.realpath(__file__)))  # read config file
