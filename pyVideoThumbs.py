@@ -2,31 +2,33 @@
 # -*- coding: utf-8 -*-
 # Encoding: UTF-8
 
-import getopt, os, sys
+import getopt
+import os
+import sys
 
-#from misc import makeDir
-#from error import usage, onError
-#from video import checkIfVideo, generateFrames
-#from image import makeContactSheet
+# from misc import makeDir
+# from error import usage, onError
+# from video import checkIfVideo, generateFrames
+# from image import makeContactSheet
 
 from error import onError, usage
-from misc import (makeDir, confirm, 
-                  tempDir, videoTypes, 
+from misc import (makeDir, confirm,
+                  tempDir, videoTypes,
                   videoParams, sheetParams, tcParams, infoParams)
 from video import checkIfVideo, generateFrames, findVideos
 from image import makeContactSheet
 
 ############### handle arguments ###############
 try:
-    myopts, args = getopt.getopt(sys.argv[1:],'f:p:o:skrivh', 
-                                 ['file=', 
-                                  'path=', 
-                                  'outdir', 
-                                  'skipexisting', 
-                                  'keepgoing', 
-                                  'rename', 
-                                  'info', 
-                                  'verbose', 
+    myopts, args = getopt.getopt(sys.argv[1:], 'f:p:o:skrivh',
+                                 ['file=',
+                                  'path=',
+                                  'outdir',
+                                  'skipexisting',
+                                  'keepgoing',
+                                  'rename',
+                                  'info',
+                                  'verbose',
                                   'help'])
 
 except getopt.GetoptError as e:
@@ -66,7 +68,7 @@ for option, argument in myopts:
         if confirm("rename files", verbose):
             noRename = False
         else:
-            print "--- Restart without rename option"
+            print("--- Restart without rename option")
             sys.exit(0)
     elif option in ('-i', '--info'):
         info = True
@@ -82,85 +84,93 @@ if myFile and path:
 
 # checking temporary directory
 if not os.path.isdir(tempDir):
-    print "Temporary directory %s does not exist" % tempDir
+    print("Temporary directory %s does not exist" % tempDir)
     tempDir = makeDir(os.getcwd(), tempDir)
 else:
     if not os.access(tempDir, os.W_OK):
         onError(8, "Temporary directory %s not writeable" % tempDir)
 if verbose:
-    print "--- Temporary directory is %s" % tempDir
+    print("--- Temporary directory is %s" % tempDir)
 
 # checking out directory
-if outDir and os.path.isdir(os.path.join(os.getcwd(), outDir)):  # if directory exist in current path
+# if directory exist in current path
+if outDir and os.path.isdir(os.path.join(os.getcwd(), outDir)):
     outDir = os.path.join(os.getcwd(), outDir)
-elif myFile and outDir and os.path.isdir(os.path.join(os.path.dirname(myFile), outDir)):  # if file and outdir is given and, outdir exist in files directory
+# if file and outdir is given and, outdir exist in files directory
+elif myFile and outDir and os.path.isdir(os.path.join(os.path.dirname(myFile), outDir)):
     outDir = os.path.join(os.path.dirname(myFile), outDir)
-elif myFile and outDir and not os.path.isdir(os.path.join(os.path.dirname(myFile), outDir)):  # if file and outdir is given, and outdir does NOT exist in file's directory
-    print "*** Out directory %s doesn't exist" % os.path.join(os.path.dirname(myFile), outDir)
+# if file and outdir is given, and outdir does NOT exist in file's directory
+elif myFile and outDir and not os.path.isdir(os.path.join(os.path.dirname(myFile), outDir)):
+    print("*** Out directory %s doesn't exist" %
+          os.path.join(os.path.dirname(myFile), outDir))
     outDir = makeDir(os.path.dirname(myFile), outDir)
-elif path and outDir and os.path.isdir(os.path.join(path, outDir)):  # if path and outdir is given and outdir exist in path's directory
+# if path and outdir is given and outdir exist in path's directory
+elif path and outDir and os.path.isdir(os.path.join(path, outDir)):
     outDir = os.path.join(path, outDir)
-elif path and outDir and not os.path.isdir(os.path.join(path, outDir)):  # if path and outdir is given and outdir does NOT exist in path's directory
-    print "*** Out directory %s doesn't exist" % os.path.join(path, outDir)
+# if path and outdir is given and outdir does NOT exist in path's directory
+elif path and outDir and not os.path.isdir(os.path.join(path, outDir)):
+    print("*** Out directory %s doesn't exist" % os.path.join(path, outDir))
     outDir = makeDir(path, outDir)
 else:
     outDir = os.getcwd()
 
 if verbose:
-    print "--- Output directory is %s" % outDir
+    print("--- Output directory is %s" % outDir)
 
 ############### single video file ###############
 if myFile:
     if checkIfVideo(myFile, videoTypes, verbose):
-        frameNames, grabTimes, fileInfo = generateFrames(myFile, 
-                                                         videoParams, 
-                                                         sheetParams, 
-                                                         tempDir, 
-                                                         keepGoing, 
+        frameNames, grabTimes, fileInfo = generateFrames(myFile,
+                                                         videoParams,
+                                                         sheetParams,
+                                                         tempDir,
+                                                         keepGoing,
                                                          info, verbose)
         if frameNames:
-            contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, 
-                                            sheetParams, 
-                                            tcParams, 
-                                            infoParams, 
-                                            tempDir, 
-                                            info, verbose) # create the contact sheet
-            
+            contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo,
+                                            sheetParams,
+                                            tcParams,
+                                            infoParams,
+                                            tempDir,
+                                            info, verbose)  # create the contact sheet
+
             fileName = os.path.basename(myFile)
-            contactSheet.save("%s/%s.png" % (outDir, fileName)) # save contact sheet
+            contactSheet.save("%s/%s.png" %
+                              (outDir, fileName))  # save contact sheet
         else:
-            print "*** Could not grab any frames\n    Skipping video"
+            print("*** Could not grab any frames\n    Skipping video")
 
 ############### scan path ###############
 if path:
     videoNo = 0
-    
-    foundVideos = findVideos(path, videoTypes, keepGoing, noRename, outDir, verbose)
-        
+
+    foundVideos = findVideos(
+        path, videoTypes, keepGoing, noRename, outDir, verbose)
+
     foundVideos = sorted(foundVideos)
     noVideos = len(foundVideos)
-    
+
     for myFile in foundVideos:
         videoNo += 1
-        print "\n%s/%s" % (videoNo, noVideos)
-        print "%s" % myFile
-        print "-" * 40
-        frameNames, grabTimes, fileInfo = generateFrames(myFile, 
-                                                         videoParams, 
-                                                         sheetParams, 
-                                                         tempDir, 
-                                                         keepGoing, 
+        print("\n%s/%s" % (videoNo, noVideos))
+        print("%s" % myFile)
+        print("-" * 40)
+        frameNames, grabTimes, fileInfo = generateFrames(myFile,
+                                                         videoParams,
+                                                         sheetParams,
+                                                         tempDir,
+                                                         keepGoing,
                                                          info, verbose)
-        
+
         if frameNames:
-            contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo, 
-                                            sheetParams, 
-                                            tcParams, 
-                                            infoParams, 
-                                            tempDir, 
+            contactSheet = makeContactSheet(frameNames, grabTimes, fileInfo,
+                                            sheetParams,
+                                            tcParams,
+                                            infoParams,
+                                            tempDir,
                                             info, verbose)  # create the contact sheet
             fileName = os.path.basename(myFile)
-            contactSheet.save("%s/%s.png" % (outDir, fileName))  # save contact sheet
+            contactSheet.save("%s/%s.png" %
+                              (outDir, fileName))  # save contact sheet
         else:
-            print "*** Could not grab any frames\n    Skipping this video"
-            
+            print("*** Could not grab any frames\n    Skipping this video")
